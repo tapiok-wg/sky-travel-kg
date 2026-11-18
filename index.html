@@ -1,0 +1,759 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sky Travel KG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слоистый горный первый экран (буквы между хребтами), дальше — строгая архитектурная сетка с тонкими линиями. */
+:root{
+  --night:#050b20;
+  --deep:#0a1840;
+  --line:rgba(170,205,255,.13);
+  --snow:#eef4ff;
+  --mist:rgba(220,232,255,.66);
+  --ice:#9fd8ff;
+  --signal:#ff7a1a;
+  --amber:#ffb347;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Manrope","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--night);color:var(--snow);font-family:var(--body);font-size:17px;line-height:1.6;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--night)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist)}
+/* static film grain (no animation, no repaint) */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:70;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- nav (no backdrop blur = no lag) ---------- */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(5,11,32,.9);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-family:var(--display);font-weight:800;letter-spacing:.12em;font-size:14px}
+.nav ul{display:flex;gap:30px;list-style:none;margin:0;padding:0;font-size:14px;font-weight:700}
+.nav ul a{text-decoration:none;color:var(--mist);transition:color .2s}
+.nav ul a:hover{color:var(--snow)}
+@media (max-width:860px){.nav ul{display:none}}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:15px 24px;border-radius:999px;font-weight:800;font-size:15px;text-decoration:none;border:0;cursor:pointer;font-family:var(--body);position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.btn:hover{transform:translateY(-2px)}
+.btn-signal{background:linear-gradient(100deg,var(--signal),#ff9a3c);color:#fff;box-shadow:0 14px 40px rgba(255,122,26,.32)}
+.btn-signal:hover{box-shadow:0 18px 50px rgba(255,122,26,.5)}
+.btn-signal::after{content:"";position:absolute;top:0;bottom:0;left:-40%;width:30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:left .7s}
+.btn-signal:hover::after{left:120%}
+.btn-ghost{border:1px solid rgba(255,255,255,.28);color:var(--snow);background:rgba(255,255,255,.04)}
+.btn-ghost:hover{border-color:var(--snow)}
+
+/* ---------- HERO: layered mountains, word between layers ---------- */
+.hero{position:relative;overflow:hidden;min-height:clamp(640px,88vh,940px);display:flex;flex-direction:column;isolation:isolate}
+.sky{position:absolute;inset:0;z-index:-5;background:
+  radial-gradient(ellipse 60% 45% at 72% 62%,rgba(255,122,26,.42),transparent 70%),
+  radial-gradient(ellipse 70% 60% at 20% 10%,rgba(47,110,255,.35),transparent 70%),
+  linear-gradient(180deg,#040a1e 0%,#0a1a48 55%,#1b1d4e 78%,#2a1a3d 100%)}
+.stars{position:absolute;inset:0;z-index:-5;background-image:
+  radial-gradient(1.2px 1.2px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 28% 8%,#fff,transparent),
+  radial-gradient(1.4px 1.4px at 46% 22%,#fff,transparent),radial-gradient(1px 1px at 63% 12%,#fff,transparent),
+  radial-gradient(1.2px 1.2px at 81% 26%,#fff,transparent),radial-gradient(1px 1px at 92% 9%,#fff,transparent),
+  radial-gradient(1px 1px at 7% 36%,#fff,transparent),radial-gradient(1.3px 1.3px at 55% 4%,#fff,transparent),
+  radial-gradient(1px 1px at 36% 32%,#fff,transparent),radial-gradient(1px 1px at 74% 34%,#fff,transparent);opacity:.7}
+.sun{position:absolute;z-index:-4;width:min(22vw,240px);aspect-ratio:1;border-radius:50%;left:66%;top:44%;will-change:transform;background:radial-gradient(circle at 40% 40%,#ffe2b0,#ffb347 45%,#ff7a1a 72%,rgba(255,122,26,0) 73%)}
+.sun::before{content:"";position:absolute;inset:-60%;border-radius:50%;background:radial-gradient(circle,rgba(255,140,40,.35),rgba(255,140,40,0) 65%)}
+.hero{contain:paint}
+.ridge{position:absolute;left:-6%;width:112%;bottom:0;display:block;will-change:transform}
+.ridge.r1{z-index:-3;height:72%;animation:drift 38s ease-in-out infinite alternate}
+.ridge.r2{z-index:-2;height:58%;animation:drift 30s ease-in-out infinite alternate-reverse}
+.ridge.r3{z-index:2;height:56%;animation:drift 26s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate3d(-1.5%,0,0)}to{transform:translate3d(1.5%,0,0)}}
+.snowfall{position:absolute;inset:-100% 0 0;z-index:3;pointer-events:none;will-change:transform;animation:fall 22s linear infinite;
+  background-image:radial-gradient(2px 2px at 10% 20%,rgba(255,255,255,.8),transparent),radial-gradient(3px 3px at 30% 60%,rgba(255,255,255,.6),transparent),
+  radial-gradient(2px 2px at 55% 35%,rgba(255,255,255,.7),transparent),radial-gradient(2.5px 2.5px at 75% 80%,rgba(255,255,255,.6),transparent),
+  radial-gradient(1.6px 1.6px at 90% 45%,rgba(255,255,255,.8),transparent),radial-gradient(2px 2px at 45% 90%,rgba(255,255,255,.5),transparent);
+  background-size:420px 420px}
+@keyframes fall{from{transform:translate3d(0,0,0)}to{transform:translate3d(-60px,50%,0)}}
+.hero-top{position:relative;z-index:4}
+.hero-top .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-block:28px 0}
+.word{position:relative;z-index:1;margin:0;text-align:center;font-family:var(--display);font-weight:900;text-transform:uppercase;letter-spacing:-.05em;line-height:.8;
+  font-size:clamp(46px,13.2vw,210px);margin-top:clamp(110px,22vh,230px);white-space:nowrap}
+.word span{display:inline-block;animation:rise 1.2s cubic-bezier(.2,.8,.2,1) both;
+  background:linear-gradient(180deg,#ffffff 25%,#cfe8ff 70%,#7fb4ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none}
+.word span:nth-child(2){animation-delay:.05s}.word span:nth-child(3){animation-delay:.1s}.word span:nth-child(4){animation-delay:.15s}
+.word span:nth-child(5){animation-delay:.2s}.word span:nth-child(6){animation-delay:.25s}.word span:nth-child(7){animation-delay:.3s}
+@keyframes rise{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
+.hero-bottom{position:relative;z-index:4;margin-top:auto}
+.hero-bottom .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:end;padding-block:0 44px}
+.lede{margin:0;font-size:clamp(17px,1.7vw,21px);color:var(--mist);max-width:36ch}
+.lede b{color:var(--snow)}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.altitude{position:absolute;z-index:4;right:max(16px,env(safe-area-inset-right,0px));top:120px;height:44%;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;pointer-events:none;border-right:1px solid rgba(159,216,255,.35);padding-right:10px}
+.altitude span{font-family:var(--mono);font-size:11px;color:var(--ice)}
+.altitude span:first-child{color:var(--signal)}
+@media (max-width:860px){.hero-bottom .wrap{grid-template-columns:1fr}.hero-cta{justify-content:flex-start}.altitude{display:none}}
+
+/* ---------- stats strip ---------- */
+.stats{border-block:1px solid var(--line);background:var(--night)}
+.stats .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:30px 24px;border-right:1px solid var(--line);min-width:0}
+.stat:first-child{padding-left:0}.stat:last-child{border-right:0}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,38px);letter-spacing:-.02em;line-height:1.1}
+.stat b em{font-style:normal;color:var(--signal)}
+.stat span{color:var(--mist);font-size:14px}
+@media (max-width:760px){.stats .wrap{grid-template-columns:1fr 1fr}.stat{padding:22px 16px}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}.stat:nth-child(3){padding-left:0}}
+
+/* ---------- marquee ---------- */
+.marquee{border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;padding-block:20px}
+.marquee{will-change:transform}
+.marquee div{display:inline-flex;gap:48px;will-change:transform;animation:slide 36s linear infinite;font-family:var(--display);font-weight:600;font-size:clamp(18px,2.4vw,28px);letter-spacing:.02em;text-transform:uppercase}
+.marquee em{font-style:normal;color:var(--signal)}
+.marquee .o{color:transparent;-webkit-text-stroke:1px var(--snow)}
+@keyframes slide{to{transform:translate3d(-50%,0,0)}}
+
+/* ---------- sections ---------- */
+section{border-bottom:1px solid var(--line);position:relative}
+section > .wrap{padding-block:clamp(64px,10vw,120px)}
+.head{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;align-items:end;margin-bottom:56px}
+.head .mono{grid-column:1/4;display:flex;gap:10px;align-items:center}
+.head .mono::before{content:"";width:28px;height:1px;background:var(--signal)}
+.head h2{grid-column:4/13;margin:0;font-family:var(--display);font-weight:800;font-size:clamp(34px,5.2vw,74px);line-height:1;letter-spacing:-.035em;text-wrap:balance}
+.head h2 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--snow)}
+@media (max-width:860px){.head .mono,.head h2{grid-column:1/-1}}
+
+/* included */
+.cells{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--line)}
+.cell{grid-column:span 2;padding:40px 34px 44px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;min-width:0;overflow:hidden;transition:background .35s}
+.cell::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:linear-gradient(90deg,var(--ice),var(--signal));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.cell:hover{background:rgba(159,216,255,.045)}
+.cell:hover::after{width:100%}
+.cell:nth-child(3){border-right:0}
+.cell:nth-child(n+4){grid-column:span 3;border-bottom:0}
+.cell:nth-child(5){border-right:0}
+.cell svg{width:48px;height:48px;stroke:var(--ice);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke .3s,transform .4s}
+.cell:hover svg{stroke:var(--signal);transform:translateY(-4px)}
+.cell h3{font-family:var(--display);font-weight:600;font-size:22px;margin:30px 0 8px;letter-spacing:-.01em}
+.cell p{margin:0;color:var(--mist);font-size:16px;max-width:38ch}
+.cell .tag{position:absolute;top:22px;right:24px}
+@media (max-width:860px){.cells{grid-template-columns:1fr}.cell,.cell:nth-child(n+4){grid-column:auto;border-right:0;border-bottom:1px solid var(--line)}.cell:last-child{border-bottom:0}}
+
+/* route */
+.route{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;align-items:center}
+.map{grid-column:1/8;border:1px solid var(--line);background:radial-gradient(ellipse at 60% 55%,rgba(47,123,255,.13),transparent 70%)}
+.map svg{display:block;width:100%;height:auto}
+.route-list{grid-column:8/13;border-top:1px solid var(--line)}
+.route-list div{padding:22px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:110px 1fr;gap:16px}
+.route-list b{font-family:var(--display);font-weight:600;font-size:18px}
+.route-list span{color:var(--mist)}
+.draw{stroke-dasharray:1;stroke-dashoffset:1}
+.in .draw{animation:draw 3s .2s cubic-bezier(.6,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (max-width:860px){.map,.route-list{grid-column:1/-1}}
+
+/* evening */
+.evening{background:radial-gradient(ellipse 50% 70% at 25% 50%,rgba(255,122,26,.13),transparent 70%)}
+.evening .wrap{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;align-items:center}
+.fire{grid-column:1/6;aspect-ratio:1;max-width:100%;position:relative;display:grid;place-items:center}
+.fire .glow{position:absolute;inset:10%;border-radius:50%;background:radial-gradient(circle,rgba(255,150,40,.5),rgba(255,122,26,.1) 48%,transparent 70%);will-change:transform,opacity;animation:flick 1.6s ease-in-out infinite alternate}
+.fire svg.flames{width:44%;position:relative}
+.fire .ring{position:absolute;inset:0;border:1px dashed var(--line);border-radius:50%;will-change:transform;animation:spin 70s linear infinite}
+.fire .ring.r2{inset:15%;animation-duration:45s;animation-direction:reverse}
+.fire .label{position:absolute;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--mist)}
+.fire .l1{top:4%;left:50%;transform:translateX(-50%)}.fire .l2{bottom:4%;left:50%;transform:translateX(-50%)}
+@keyframes flick{0%{transform:scale(.95);opacity:.8}100%{transform:scale(1.05);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.flame{transform-origin:50% 100%;animation:sway 1.3s ease-in-out infinite alternate}
+.flame.f2{animation-duration:.9s}.flame.f3{animation-duration:1.1s}
+@keyframes sway{0%{transform:scaleY(.92) skewX(-3deg)}100%{transform:scaleY(1.06) skewX(3deg)}}
+.evening-text{grid-column:7/13}
+.evening-text h2{font-family:var(--display);font-weight:800;font-size:clamp(32px,4.6vw,62px);line-height:1.02;letter-spacing:-.035em;margin:18px 0 24px;text-wrap:balance}
+.evening-text h2 em{font-style:normal;background:linear-gradient(90deg,var(--amber),var(--signal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.evening-text p{color:var(--mist);max-width:46ch;margin:0}
+@media (max-width:860px){.fire,.evening-text{grid-column:1/-1}.fire{max-width:340px;width:100%;margin:0 auto}}
+
+/* prices */
+.tiers{display:grid;grid-template-columns:1fr 1fr;gap:24px;perspective:1200px}
+.tier{position:relative;padding:46px 42px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.065),rgba(255,255,255,.012));border-radius:6px;min-width:0;overflow:hidden;transform-style:preserve-3d;transition:transform .4s cubic-bezier(.2,.8,.2,1),border-color .3s}
+.tier::before{content:"";position:absolute;inset:0;background:radial-gradient(400px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.09),transparent 60%);pointer-events:none}
+.tier.vip{border-color:rgba(255,154,60,.6)}
+.tier.vip::after{content:"";position:absolute;width:420px;height:420px;right:-160px;top:-180px;border-radius:50%;background:radial-gradient(circle,rgba(255,122,26,.28),transparent 65%);pointer-events:none}
+.tier .mono{display:flex;justify-content:space-between}
+.price{font-family:var(--display);font-weight:900;font-size:clamp(56px,7vw,100px);letter-spacing:-.045em;line-height:1;margin:30px 0 6px;font-variant-numeric:tabular-nums}
+.price small{font-size:.26em;font-weight:600;letter-spacing:0;color:var(--mist);margin-left:10px}
+.tier.vip .price{background:linear-gradient(90deg,var(--amber),var(--signal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tier ul{list-style:none;padding:0;margin:34px 0 0;display:grid;gap:14px}
+.tier li{display:flex;gap:14px;align-items:center;font-weight:700}
+.tier li::before{content:"";width:22px;height:22px;flex-shrink:0;border-radius:50%;background:var(--ice) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4L18 8' fill='none' stroke='%23050b20' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
+.tier.vip li::before{background-color:var(--signal)}
+.tier .btn{margin-top:38px;position:relative;z-index:1}
+@media (max-width:860px){.tiers{grid-template-columns:1fr}}
+
+/* booking */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.step{padding:38px 32px 38px 0;border-right:1px solid var(--line);min-width:0}
+.step + .step{padding-left:32px}
+.step:last-child{border-right:0}
+.step .n{font-family:var(--display);font-weight:900;font-size:72px;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--ice)}
+.step h3{font-family:var(--display);font-weight:600;font-size:22px;margin:22px 0 8px}
+.step p{margin:0;color:var(--mist)}
+@media (max-width:860px){.steps{grid-template-columns:1fr}.step,.step + .step{padding:28px 0;border-right:0;border-bottom:1px solid var(--line)}}
+.contact{margin-top:56px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;padding:36px;border:1px solid rgba(255,154,60,.5);border-radius:6px;background:linear-gradient(100deg,rgba(255,122,26,.14),rgba(255,122,26,.02))}
+.phone{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,46px);letter-spacing:-.01em;user-select:all}
+.contact .actions{display:flex;gap:12px;flex-wrap:wrap}
+#copied{font-size:14px;color:var(--ice);min-height:1.4em}
+
+/* big footer word */
+footer{overflow:hidden}
+footer .big{font-family:var(--display);font-weight:900;font-size:clamp(60px,15vw,220px);letter-spacing:-.05em;line-height:.85;color:transparent;-webkit-text-stroke:1px rgba(170,205,255,.25);text-align:center;padding-top:60px;white-space:nowrap}
+footer .wrap{padding-block:28px 40px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+
+/* why us */
+.why{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.why div{padding:34px 28px 36px 0;border-right:1px solid var(--line);min-width:0}
+.why div + div{padding-left:28px}
+.why div:last-child{border-right:0}
+.why b{display:block;font-family:var(--display);font-weight:600;font-size:21px;line-height:1.2;margin:18px 0 10px}
+.why p{margin:0;color:var(--mist);font-size:16px}
+.why .dot{width:12px;height:12px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 6px rgba(255,122,26,.15)}
+@media (max-width:960px){.why{grid-template-columns:1fr 1fr}.why div:nth-child(2){border-right:0}.why div:nth-child(3){padding-left:0}.why div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+@media (max-width:560px){.why{grid-template-columns:1fr}.why div,.why div + div{padding:26px 0;border-right:0;border-bottom:1px solid var(--line)}}
+
+/* pack list + faq */
+.duo{display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:start}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+.pack{border:1px solid var(--line);border-radius:6px;padding:30px;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01))}
+.pack h3,.faq h3{font-family:var(--display);font-weight:600;font-size:24px;margin:0 0 6px}
+.bar{height:6px;border-radius:6px;background:rgba(255,255,255,.08);margin:18px 0 20px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ice),var(--signal));transition:width .4s}
+.pack label{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;font-weight:700}
+.pack label:last-of-type{border-bottom:0}
+.pack input{appearance:none;width:24px;height:24px;flex-shrink:0;border:1.5px solid rgba(255,255,255,.4);border-radius:7px;display:grid;place-items:center;cursor:pointer;transition:background .2s,border-color .2s}
+.pack input:checked{background:var(--signal);border-color:var(--signal)}
+.pack input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.pack input:checked + span{color:var(--mist);text-decoration:line-through}
+.faq details{border-bottom:1px solid var(--line)}
+.faq details:first-of-type{border-top:1px solid var(--line);margin-top:18px}
+.faq summary{list-style:none;cursor:pointer;padding:22px 44px 22px 0;position:relative;font-weight:800;font-size:18px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";position:absolute;right:6px;top:50%;width:14px;height:14px;margin-top:-10px;border:solid var(--ice);border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .3s}
+.faq details[open] summary::after{transform:rotate(-135deg);margin-top:-2px;border-color:var(--signal)}
+.faq details p{margin:0 0 22px;color:var(--mist);max-width:60ch}
+
+/* instagram band */
+.insta{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+.insta h2{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,52px);letter-spacing:-.03em;line-height:1.05}
+.insta h2 span{background:linear-gradient(90deg,#ffb347,#ff7a1a,#ff4f7a);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* floating WhatsApp */
+.fab{position:fixed;z-index:55;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;padding:14px 20px 14px 16px;border-radius:999px;background:linear-gradient(100deg,var(--signal),#ff9a3c);color:#fff;text-decoration:none;font-weight:800;box-shadow:0 14px 40px rgba(255,122,26,.45);transform:translateY(140%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.fab.show{transform:none}
+.fab svg{width:26px;height:26px}
+.fab::before{content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--signal);animation:ping 2.4s ease-out infinite}
+@keyframes ping{from{transform:scale(1);opacity:.7}to{transform:scale(1.35);opacity:0}}
+@media (max-width:560px){.fab span{display:none}.fab{padding:16px}}
+
+/* ===== MOTION LAYER ===== */
+/* scroll progress under the nav */
+.progress{position:absolute;left:0;bottom:-1px;height:2px;width:100%;background:linear-gradient(90deg,var(--ice),var(--signal));transform-origin:0 50%;transform:scaleX(0);will-change:transform}
+/* hero parallax uses the individual `translate` property so it stacks with the drift animation */
+.ridge.r1{translate:0 calc(var(--s,0) * 40px)}
+.ridge.r2{translate:0 calc(var(--s,0) * 90px)}
+.ridge.r3{translate:0 calc(var(--s,0) * 170px)}
+.sun{translate:0 calc(var(--s,0) * 120px);scale:calc(1 + var(--s,0) * .25)}
+.word{translate:0 calc(var(--s,0) * 140px);scale:calc(1 + var(--s,0) * .12);transform-origin:50% 100%;will-change:translate,scale}
+.hero-bottom,.hero-top{will-change:translate,opacity}
+.hero-bottom,.hero-top{translate:0 calc(var(--s,0) * -40px);opacity:calc(1 - var(--s,0) * 1.4)}
+/* hero load choreography */
+.ridge.r1{animation:drift 38s ease-in-out infinite alternate,up 1.4s .1s cubic-bezier(.2,.8,.2,1) both}
+.ridge.r2{animation:drift 30s ease-in-out infinite alternate-reverse,up 1.4s .25s cubic-bezier(.2,.8,.2,1) both}
+.ridge.r3{animation:drift 26s ease-in-out infinite alternate,up 1.4s .4s cubic-bezier(.2,.8,.2,1) both}
+.sun{animation:sunrise 1.8s .2s cubic-bezier(.2,.8,.2,1) both}
+@keyframes up{from{opacity:0}to{opacity:1}}
+@keyframes sunrise{from{opacity:0}to{opacity:1}}
+/* phones: no slow drift, lighter snow */
+@media (max-width:760px){
+  .ridge.r1,.ridge.r2,.ridge.r3{animation:up 1.2s both}
+  .snowfall{animation-duration:30s;opacity:.7}
+}
+/* split headings: each word on its own mask */
+.head h2 .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.08em;margin-bottom:-.08em}
+.head h2 .w > span{display:inline-block}
+@supports (animation-timeline: view()){
+  .head h2 .w > span{animation:wordIn linear both;animation-timeline:view();animation-range:entry 0% cover 30%}
+  .cell,.why > div,.step,.tier,.route-list > div,.faq details{animation:liftIn linear both;animation-timeline:view();animation-range:entry 0% cover 25%}
+  .cell:nth-child(2),.why > div:nth-child(2),.step:nth-child(2),.tier.vip,.route-list > div:nth-child(2){animation-range:entry 8% cover 32%}
+  .cell:nth-child(3),.why > div:nth-child(3),.step:nth-child(3),.route-list > div:nth-child(3){animation-range:entry 16% cover 38%}
+  .cell:nth-child(4),.why > div:nth-child(4),.route-list > div:nth-child(4){animation-range:entry 24% cover 44%}
+  .cell:nth-child(5){animation-range:entry 30% cover 50%}
+  .map .draw{animation:draw linear both!important;animation-timeline:view()!important;animation-range:entry 20% cover 60%!important}
+  footer .big{animation:bigSlide linear both;animation-timeline:view();animation-range:entry 0% exit 0%}
+  .fire{animation:fireIn linear both;animation-timeline:view();animation-range:entry 0% cover 40%}
+}
+@keyframes wordIn{from{transform:translateY(70%) skewY(7deg);opacity:.35}to{transform:none;opacity:1}}
+@keyframes liftIn{from{translate:0 60px;scale:.97;opacity:.4}to{translate:0 0;scale:1;opacity:1}}
+@keyframes bigSlide{from{transform:translateX(18%)}to{transform:translateX(-4%)}}
+@keyframes fireIn{from{transform:scale(.8) rotate(-8deg)}to{transform:none}}
+/* custom cursor (desktop only) */
+.cur,.cur-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:80;border-radius:50%;will-change:transform;display:none}
+.cur{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--signal)}
+.cur-ring{width:40px;height:40px;margin:-20px 0 0 -20px;border:1.5px solid rgba(238,244,255,.6);transition:width .25s,height .25s,margin .25s,border-color .25s,background .25s}
+.cur-ring.big{width:76px;height:76px;margin:-38px 0 0 -38px;border-color:var(--signal);background:rgba(255,122,26,.08)}
+@media (hover:hover) and (pointer:fine){.cur,.cur-ring{display:block}}
+.btn{will-change:transform}
+
+/* reveals: content is visible at rest; only a small lift */
+.lift{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.lift.down{transform:translateY(26px)}
+
+/* pause decorative motion while offscreen */
+.paused .ridge,.paused .snowfall,.paused .glow,.paused .ring,.paused .flame,.marquee.paused div{animation-play-state:paused!important}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .draw{stroke-dashoffset:0}
+}
+</style>
+
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg width="34" height="26" viewBox="0 0 40 30" aria-hidden="true"><path d="M2 28 L15 6 L22 17 L27 11 L38 28Z" fill="#eef4ff"/><path d="M15 6 L11 13 L14 12 L16 14 L19 11Z" fill="#9fd8ff"/><circle cx="31" cy="5" r="4" fill="#ff7a1a"/></svg>
+      SKY TRAVEL KG
+    </a>
+    <ul>
+      <li><a href="#tour">Тур</a></li>
+      <li><a href="#route">Трансфер</a></li>
+      <li><a href="#prices">Цены</a></li>
+      <li><a href="#book">Бронь</a></li>
+    </ul>
+    <a class="btn btn-signal" href="https://wa.me/996708470500" target="_blank" rel="noopener">WhatsApp</a>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+<div class="cur" id="cur" aria-hidden="true"></div><div class="cur-ring" id="ring" aria-hidden="true"></div>
+
+<main id="top">
+  <!-- HERO -->
+  <div class="hero" id="hero">
+    <div class="sky"></div>
+    <div class="stars"></div>
+    <div class="sun"></div>
+    <svg class="ridge r1" viewBox="0 0 1600 600" preserveAspectRatio="none" aria-hidden="true"><path id="p1" fill="#24356f"/><path id="s1" fill="none" stroke="rgba(190,220,255,.35)" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>
+    <svg class="ridge r2" viewBox="0 0 1600 600" preserveAspectRatio="none" aria-hidden="true"><path id="p2" fill="#14224f"/><path id="c2" fill="#dce9ff" opacity=".85"/></svg>
+    <div class="hero-top"><div class="wrap">
+      <span class="mono">42.49° N · 78.39° E</span>
+      <span class="mono">Тянь-Шань · Кыргызстан</span>
+      <span class="mono">Сезон 2026–27</span>
+    </div></div>
+    <div class="altitude" aria-hidden="true"><span>3040 м</span><span>2800</span><span>2600</span><span>2300 м</span></div>
+    <h1 class="word" aria-label="Каракол"><span>К</span><span>А</span><span>Р</span><span>А</span><span>К</span><span>О</span><span>Л</span></h1>
+    <svg class="ridge r3" viewBox="0 0 1600 400" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1433"/><stop offset="1" stop-color="#050b20"/></linearGradient></defs><path id="p3" fill="url(#g3)"/><path id="s3" fill="none" stroke="rgba(255,122,26,.7)" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>
+    <div class="snowfall" aria-hidden="true"></div>
+    <div class="hero-bottom"><div class="wrap">
+      <p class="lede"><b>Горнолыжные туры из Бишкека.</b> Три дня в горах: склоны, снег, а вечером — костёр рядом с озером Иссык-Куль.</p>
+      <div class="hero-cta">
+        <a class="btn btn-signal" href="https://wa.me/996708470500" target="_blank" rel="noopener">Забронировать в WhatsApp</a>
+        <a class="btn btn-ghost" href="#prices">Цены</a>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="stats"><div class="wrap">
+    <div class="stat"><b>3 дня</b><span>в горах Каракола</span></div>
+    <div class="stat"><b><em>7 000</em> сом</b><span>тариф «Стандарт»</span></div>
+    <div class="stat"><b>3040 м</b><span>верх курорта</span></div>
+    <div class="stat"><b>Свой бус</b><span>Бишкек — Каракол</span></div>
+  </div></div>
+
+  <div class="marquee" aria-hidden="true"><div>
+    <span>Лыжи</span><em>✕</em><span class="o">Сноуборд</span><em>✕</em><span>Фрирайд</span><em>✕</em><span class="o">Костёр у Иссык-Куля</span><em>✕</em><span>Трансфер из Бишкека</span><em>✕</em>
+    <span>Лыжи</span><em>✕</em><span class="o">Сноуборд</span><em>✕</em><span>Фрирайд</span><em>✕</em><span class="o">Костёр у Иссык-Куля</span><em>✕</em><span>Трансфер из Бишкека</span><em>✕</em>
+  </div></div>
+
+  <!-- INCLUDED -->
+  <section id="tour">
+    <div class="wrap">
+      <div class="head lift">
+        <span class="mono">Что входит</span>
+        <h2>Всё включено. <em>Только приехать.</em></h2>
+      </div>
+      <div class="cells">
+        <div class="cell"><span class="mono tag">Дорога</span>
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2.5"/><path d="M3 10h18M7 16v2.5M17 16v2.5"/></svg>
+          <h3>Трансфер</h3><p>Бишкек — Каракол и обратно на нашем транспорте.</p></div>
+        <div class="cell"><span class="mono tag">Ночь</span>
+          <svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-1.5A3.5 3.5 0 0 0 17.5 9H11v5"/><circle cx="7" cy="11" r="1.6"/></svg>
+          <h3>Проживание</h3><p>Рядом со склоном, чтобы утром сразу на подъёмник.</p></div>
+        <div class="cell"><span class="mono tag">Склон</span>
+          <svg viewBox="0 0 24 24"><path d="M3 19l6.5-10 4 6 3-4.5L21 19z"/></svg>
+          <h3>Ски-пасс карта</h3><p>Карта для подъёмников на курорте.</p></div>
+        <div class="cell"><span class="mono tag">Вечер</span>
+          <svg viewBox="0 0 24 24"><path d="M12 3c.8 3.6 5 5 5 10a5 5 0 0 1-10 0c0-2.6 1.6-3.8 2-5.6 1.7 1 2.6 2.6 2.6 2.6S12.4 6.4 12 3z"/></svg>
+          <h3>Костёр у Иссык-Куля</h3><p>Гитара, любимые песни и тёплая компания под звёздами.</p></div>
+        <div class="cell"><span class="mono tag">Бонус</span>
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>
+          <h3>Поездки по региону</h3><p>Захотите куда-то съездить — у нас свой транспорт, организуем бесплатно.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROUTE -->
+  <section id="route">
+    <div class="wrap">
+      <div class="head lift">
+        <span class="mono">Маршрут</span>
+        <h2>Бишкек → Каракол. <em>Довезём сами.</em></h2>
+      </div>
+      <div class="route">
+        <div class="map" id="map">
+          <svg viewBox="0 0 700 420" role="img" aria-label="Схема маршрута Бишкек — озеро Иссык-Куль — Каракол">
+            <defs>
+              <linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#9fd8ff"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient>
+              <pattern id="grid" width="35" height="35" patternUnits="userSpaceOnUse"><path d="M35 0H0V35" fill="none" stroke="rgba(170,205,255,.08)"/></pattern>
+            </defs>
+            <rect width="700" height="420" fill="url(#grid)"/>
+            <path d="M300 250 C330 200 470 180 590 205 C640 215 650 255 610 275 C540 305 400 310 330 295 C300 288 288 268 300 250Z" fill="rgba(47,123,255,.22)" stroke="#9fd8ff" stroke-opacity=".5"/>
+            <text x="455" y="252" fill="#9fd8ff" font-family="JetBrains Mono, monospace" font-size="12" letter-spacing="2" text-anchor="middle">ОЗ. ИССЫК-КУЛЬ</text>
+            <path d="M80 140 C160 150 220 200 300 215 C360 175 470 160 560 170 C600 175 630 190 640 215" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+            <path class="draw" pathLength="1" d="M80 140 C160 150 220 200 300 215 C360 175 470 160 560 170 C600 175 630 190 640 215" fill="none" stroke="url(#rg)" stroke-width="4" stroke-linecap="round"/>
+            <circle r="9" fill="#fff"><animateMotion dur="6s" repeatCount="indefinite" path="M80 140 C160 150 220 200 300 215 C360 175 470 160 560 170 C600 175 630 190 640 215"/></circle>
+            <circle cx="80" cy="140" r="8" fill="#9fd8ff"/><circle cx="80" cy="140" r="18" fill="#9fd8ff" opacity=".2"/>
+            <text x="80" y="115" fill="#eef4ff" font-family="Unbounded, sans-serif" font-weight="600" font-size="18" text-anchor="middle">Бишкек</text>
+            <circle cx="640" cy="215" r="8" fill="#ff7a1a"/><circle cx="640" cy="215" r="20" fill="#ff7a1a" opacity=".25"/>
+            <text x="640" y="255" fill="#ffb347" font-family="Unbounded, sans-serif" font-weight="600" font-size="18" text-anchor="middle">Каракол</text>
+            <text x="20" y="400" fill="rgba(220,232,255,.5)" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.5">СХЕМА · НЕ В МАСШТАБЕ</text>
+          </svg>
+        </div>
+        <div class="route-list lift">
+          <div><b>Туда</b><span>Выезд из Бишкека на нашем транспорте, дорога вдоль Иссык-Куля.</span></div>
+          <div><b>На месте</b><span>Нужно куда-то съездить — поможем организовать поездку бесплатно.</span></div>
+          <div><b>Сами?</b><span>Едете своим ходом — найдём авто разных классов, трансфер и гостиницу.</span></div>
+          <div><b>Обратно</b><span>Возвращаем в Бишкек. Обратная дорога уже в цене тура.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENING -->
+  <section class="evening" id="evening">
+    <div class="wrap">
+      <div class="fire" aria-hidden="true">
+        <div class="ring"></div><div class="ring r2"></div>
+        <div class="glow"></div>
+        <span class="label l1">После склона</span><span class="label l2">Иссык-Куль</span>
+        <svg class="flames" viewBox="0 0 100 120">
+          <path class="flame" d="M50 6 C62 32 84 46 80 78 C77 100 62 112 50 112 C38 112 23 100 20 78 C17 52 40 42 50 6Z" fill="#ff6a14"/>
+          <path class="flame f2" d="M50 34 C58 52 72 62 69 84 C67 98 59 106 50 106 C41 106 33 98 31 84 C29 66 44 58 50 34Z" fill="#ffa43a"/>
+          <path class="flame f3" d="M50 62 C55 74 62 80 60 92 C59 100 55 104 50 104 C45 104 41 100 40 92 C39 82 47 76 50 62Z" fill="#ffe08a"/>
+          <rect x="18" y="108" width="64" height="9" rx="4.5" fill="#6b3a1e" transform="rotate(-8 50 112)"/>
+          <rect x="18" y="108" width="64" height="9" rx="4.5" fill="#86492a" transform="rotate(8 50 112)"/>
+        </svg>
+      </div>
+      <div class="evening-text lift">
+        <span class="mono">Вечер</span>
+        <h2>Вечером — костёр рядом с озером <em>Иссык-Куль</em>.</h2>
+        <p>Берём гитары, поём любимые песни и сидим тёплой компанией под звёздным небом.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY US -->
+  <section id="why">
+    <div class="wrap">
+      <div class="head lift">
+        <span class="mono">Почему мы</span>
+        <h2>Не просто поездка — <em>отдых, который запомнится.</em></h2>
+      </div>
+      <div class="why">
+        <div><span class="dot"></span><b>Свой транспорт</b><p>Не ждём попуток и такси. Везём сами — туда, обратно и по региону.</p></div>
+        <div><span class="dot"></span><b>Всё организуем</b><p>Жильё, ски-пасс карта, дорога. Вам остаётся кататься.</p></div>
+        <div><span class="dot"></span><b>Атмосфера</b><p>Вечера у костра рядом с Иссык-Кулем, гитара и своя компания.</p></div>
+        <div><span class="dot"></span><b>Группы и индивидуально</b><p>Едете с друзьями или один — подберём даты и программу под вас.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICES -->
+  <section id="prices">
+    <div class="wrap">
+      <div class="head lift">
+        <span class="mono">Цены · 3 дня</span>
+        <h2>Два тарифа. <em>Выберите свой.</em></h2>
+      </div>
+      <div class="tiers">
+        <article class="tier">
+          <div class="mono"><span>Стандарт</span><span>3 дня</span></div>
+          <div class="price"><span class="count" data-to="7000">7 000</span><small>сом</small></div>
+          <ul><li>Трансфер из Бишкека</li><li>Проживание</li><li>Ски-пасс карта</li><li>Вечер у костра</li></ul>
+          <a class="btn btn-ghost" href="https://wa.me/996708470500" target="_blank" rel="noopener">Выбрать «Стандарт»</a>
+        </article>
+        <article class="tier vip">
+          <div class="mono"><span style="color:var(--amber)">VIP</span><span>Максимум комфорта</span></div>
+          <div class="price"><span class="count" data-to="12300">12 300</span><small>сом</small></div>
+          <ul><li>Всё из «Стандарта»</li><li>Лучший номер</li><li>Горячие источники</li><li>Ala Too Resort</li></ul>
+          <a class="btn btn-signal" href="https://wa.me/996708470500" target="_blank" rel="noopener">Выбрать VIP</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- PACK + FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="head lift">
+        <span class="mono">Перед поездкой</span>
+        <h2>Собраться <em>и ничего не забыть.</em></h2>
+      </div>
+      <div class="duo">
+        <div class="pack">
+          <h3>Что взять с собой</h3>
+          <span class="mono" id="pack-count">Собрано 0 из 8</span>
+          <div class="bar"><i id="pack-bar"></i></div>
+          <label><input type="checkbox" id="pk1"><span>Паспорт или ID-карта</span></label>
+          <label><input type="checkbox" id="pk2"><span>Тёплая куртка и штаны</span></label>
+          <label><input type="checkbox" id="pk3"><span>Термобельё</span></label>
+          <label><input type="checkbox" id="pk4"><span>Перчатки и шапка</span></label>
+          <label><input type="checkbox" id="pk5"><span>Маска или солнцезащитные очки</span></label>
+          <label><input type="checkbox" id="pk6"><span>Крем от солнца — в горах сильное солнце</span></label>
+          <label><input type="checkbox" id="pk7"><span>Купальник — для горячих источников</span></label>
+          <label><input type="checkbox" id="pk8"><span>Хорошее настроение и гитара 🎸</span></label>
+        </div>
+        <div class="faq">
+          <h3>Частые вопросы</h3>
+          <details><summary>Я ни разу не катался. Мне можно?</summary><p>Да. На курорте есть трассы для начинающих и инструкторы. Напишите нам — подскажем, как начать.</p></details>
+          <details><summary>А если нет своих лыж или сноуборда?</summary><p>На курорте есть прокат снаряжения. Расскажем, где взять и сколько это стоит на ваши даты.</p></details>
+          <details><summary>Что входит в цену?</summary><p>«Стандарт» (7 000 сом): трансфер из Бишкека и обратно, проживание, ски-пасс карта, вечер у костра. VIP (12 300 сом): всё из «Стандарта», лучший номер, горячие источники, Ala Too Resort.</p></details>
+          <details><summary>Как забронировать и оплатить?</summary><p>Напишите в WhatsApp +996 708 470 500, выберите дату и тариф, внесите предоплату — место закреплено за вами.</p></details>
+          <details><summary>Можно поехать одному или большой группой?</summary><p>Можно и так, и так. Работаем с группами и индивидуально — подберём даты и программу.</p></details>
+          <details><summary>Хочу поехать своим ходом. Поможете?</summary><p>Да. Найдём автомобиль нужного класса, трансфер, гостиницу и другие услуги.</p></details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOKING -->
+  <section id="book">
+    <div class="wrap">
+      <div class="head lift">
+        <span class="mono">Бронь</span>
+        <h2>Три шага <em>до гор.</em></h2>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>Напишите нам</h3><p>В WhatsApp или в Direct Instagram @sky.travelkg.</p></div>
+        <div class="step"><div class="n">2</div><h3>Выберите дату</h3><p>И тариф: «Стандарт» или VIP. Подскажем свободные места.</p></div>
+        <div class="step"><div class="n">3</div><h3>Предоплата</h3><p>И место закреплено за вами. Места на сезон ограничены.</p></div>
+      </div>
+      <div class="contact">
+        <div>
+          <div class="mono">WhatsApp · звонки</div>
+          <div class="phone" id="phone">+996 708 470 500</div>
+          <div id="copied" aria-live="polite"></div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" id="copy" type="button">Скопировать номер</button>
+          <a class="btn btn-signal" href="https://wa.me/996708470500" target="_blank" rel="noopener">Написать в WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- INSTAGRAM -->
+  <section>
+    <div class="wrap insta">
+      <h2>Смотрите, как это было —<br><span>@sky.travelkg</span></h2>
+      <a class="btn btn-ghost" href="https://www.instagram.com/sky.travelkg/" target="_blank" rel="noopener">Открыть Instagram</a>
+    </div>
+  </section>
+</main>
+
+<a class="fab" id="fab" href="https://wa.me/996708470500" target="_blank" rel="noopener" aria-label="Написать в WhatsApp">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.4-3.8A8 8 0 1 1 8.6 19z"/><path d="M9 10.5c.4 1.6 1.9 3.2 3.6 3.7l1.2-1 1.8.8"/></svg>
+  <span>Забронировать</span>
+</a>
+
+<footer>
+  <div class="big" aria-hidden="true">SKY TRAVEL</div>
+  <div class="wrap">
+    <span class="mono">© Sky Travel KG · Лыжные туры в Каракол</span>
+    <a class="mono" href="https://www.instagram.com/sky.travelkg/" target="_blank" rel="noopener">Instagram @sky.travelkg</a>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- mountains: computed ONCE, then only moved with CSS (GPU) ---- */
+  const hash = n => { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); };
+  const noise = x => { const i = Math.floor(x), f = x - i, u = f*f*(3-2*f); return hash(i)*(1-u) + hash(i+1)*u; };
+  function ridge(W, H, peaks, rough, seed, base){
+    const pts = [];
+    for (let x = 0; x <= W; x += 8){
+      const nx = x / W; let h = 0;
+      for (const [c,a,w] of peaks) h += a * Math.exp(-((nx-c)**2)/(2*w*w));
+      h += (noise(nx*14+seed)*.55 + noise(nx*40+seed*3)*.25 + noise(nx*90+seed*7)*.1) * rough;
+      pts.push([x, H - (base + h * (H - base))]);
+    }
+    return pts;
+  }
+  const toD = (pts, W, H) => 'M0 ' + H + ' L' + pts.map(p => p[0] + ' ' + p[1].toFixed(1)).join(' L') + ' L' + W + ' ' + H + 'Z';
+  const line = pts => 'M' + pts.map(p => p[0] + ' ' + p[1].toFixed(1)).join(' L');
+  // far
+  const r1 = ridge(1600, 600, [[.15,.45,.07],[.33,.62,.06],[.55,.48,.08],[.78,.7,.06],[.93,.5,.05]], .22, 3, 40);
+  document.getElementById('p1').setAttribute('d', toD(r1, 1600, 600));
+  document.getElementById('s1').setAttribute('d', line(r1));
+  // mid with snow caps
+  const r2 = ridge(1600, 600, [[.08,.4,.06],[.27,.58,.07],[.47,.42,.06],[.66,.66,.07],[.88,.5,.06]], .2, 11, 20);
+  document.getElementById('p2').setAttribute('d', toD(r2, 1600, 600));
+  const minY = Math.min(...r2.map(p => p[1])), capLine = minY + 110;
+  const cap = r2.map(([x,y]) => [x, y < capLine ? y + (capLine - y) * .32 + noise(x*.04)*6 : y]);
+  document.getElementById('c2').setAttribute('d', 'M' + r2.map(p => p[0]+' '+p[1].toFixed(1)).join(' L') + ' L' + cap.reverse().map(p => p[0]+' '+p[1].toFixed(1)).join(' L') + 'Z');
+  // near (covers bottom of the word)
+  const r3 = ridge(1600, 400, [[.12,.6,.1],[.42,.35,.12],[.7,.75,.09],[.95,.5,.08]], .25, 21, 30);
+  document.getElementById('p3').setAttribute('d', toD(r3, 1600, 400));
+  document.getElementById('s3').setAttribute('d', line(r3));
+
+  /* ---- pause hero / fire animations when not visible ---- */
+  if ('IntersectionObserver' in window){
+    const pause = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('paused', !e.isIntersecting)), {rootMargin:'100px'});
+    ['hero','evening'].forEach(id => pause.observe(document.getElementById(id)));
+    document.querySelectorAll('.marquee').forEach(m => pause.observe(m));
+    // draw route once when visible
+    const map = document.getElementById('map');
+    const io3 = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ map.classList.add('in'); io3.disconnect(); } }), {threshold:.3});
+    io3.observe(map);
+  } else document.getElementById('map').classList.add('in');
+
+  /* ---- price count-up ---- */
+  const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  if (!reduce && 'IntersectionObserver' in window){
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return; io.unobserve(e.target);
+      const el = e.target, to = +el.dataset.to, t0 = performance.now(), d = 1300;
+      const tick = now => { const p = Math.min(1,(now-t0)/d); el.textContent = fmt(Math.round(to*(1-Math.pow(1-p,3)))); if (p<1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }), {threshold:.6});
+    document.querySelectorAll('.count').forEach(c => io.observe(c));
+    const io2 = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('down', !e.isIntersecting && e.boundingClientRect.top > 0)));
+    document.querySelectorAll('.lift').forEach(l => io2.observe(l));
+  }
+
+  /* ---- price cards: light follows cursor + slight tilt (desktop only) ---- */
+  if (!reduce && matchMedia('(hover:hover)').matches){
+    document.querySelectorAll('.tier').forEach(card => {
+      let raf = 0;
+      card.addEventListener('pointermove', ev => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          const r = card.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height;
+          card.style.setProperty('--mx', (x*100) + '%'); card.style.setProperty('--my', (y*100) + '%');
+          card.style.transform = `rotateX(${(0.5 - y) * 5}deg) rotateY(${(x - 0.5) * 6}deg)`;
+        });
+      });
+      card.addEventListener('pointerleave', () => { card.style.transform = ''; });
+    });
+  }
+
+  /* ===== MOTION ===== */
+  // split section headings into words (keeps <em> styling)
+  document.querySelectorAll('.head h2').forEach(h => {
+    const walk = node => [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3){
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.className = 'w';
+          const s = document.createElement('span'); s.textContent = part; w.appendChild(s); frag.appendChild(w);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1 && n.tagName !== 'BR') walk(n);
+    });
+    walk(h);
+  });
+
+  // Work happens ONLY while the page is scrolling; when it stops, nothing runs.
+  const hero = document.getElementById('hero'), progress = document.getElementById('progress');
+  const mqBox = document.querySelector('.marquee'), mq = mqBox && mqBox.querySelector('div');
+  const mqAnim = mq && mq.getAnimations ? mq.getAnimations()[0] : null;
+  const doc = document.documentElement;
+  let lastY = scrollY, vel = 0, running = false, heroH = hero.offsetHeight, maxScroll = doc.scrollHeight - innerHeight;
+  addEventListener('resize', () => { heroH = hero.offsetHeight; maxScroll = doc.scrollHeight - innerHeight; }, {passive:true});
+  function frame(){
+    const y = scrollY, dy = y - lastY; lastY = y;
+    vel += (dy - vel) * .15;
+    progress.style.transform = `scaleX(${maxScroll > 0 ? (y / maxScroll).toFixed(4) : 0})`;
+    if (y < heroH + 50) hero.style.setProperty('--s', Math.min(1, y / heroH).toFixed(3));
+    if (mqAnim){
+      const boost = 1 + Math.min(8, Math.abs(vel) * .35);
+      mqAnim.playbackRate = (vel < -0.5 ? -1 : 1) * boost;
+      mqBox.style.transform = `skewX(${Math.max(-12, Math.min(12, -vel * .5)).toFixed(2)}deg)`;
+    }
+    if (Math.abs(vel) > .05 || Math.abs(dy) > 0){ requestAnimationFrame(frame); }
+    else { running = false; if (mqAnim) mqAnim.playbackRate = 1; mqBox.style.transform = ''; }
+  }
+  if (!reduce){
+    addEventListener('scroll', () => { if (!running){ running = true; maxScroll = doc.scrollHeight - innerHeight; requestAnimationFrame(frame); } }, {passive:true});
+    frame();
+  }
+
+  // custom cursor + magnetic buttons (fine pointers only)
+  if (!reduce && matchMedia('(hover:hover) and (pointer:fine)').matches){
+    const cur = document.getElementById('cur'), ring = document.getElementById('ring');
+    let mx = innerWidth/2, my = innerHeight/2, rx = mx, ry = my, following = false;
+    const follow = () => {
+      rx += (mx - rx) * .2; ry += (my - ry) * .2;
+      ring.style.transform = `translate3d(${rx.toFixed(1)}px,${ry.toFixed(1)}px,0)`;
+      if (Math.abs(mx - rx) + Math.abs(my - ry) > .5) requestAnimationFrame(follow); else following = false;
+    };
+    addEventListener('pointermove', e => {
+      mx = e.clientX; my = e.clientY; cur.style.transform = `translate3d(${mx}px,${my}px,0)`;
+      if (!following){ following = true; requestAnimationFrame(follow); }
+    }, {passive:true});
+    document.querySelectorAll('a,button,summary,label,.tier').forEach(el => {
+      el.addEventListener('pointerenter', () => ring.classList.add('big'));
+      el.addEventListener('pointerleave', () => ring.classList.remove('big'));
+    });
+    document.querySelectorAll('.btn').forEach(b => {
+      b.addEventListener('pointermove', e => {
+        const r = b.getBoundingClientRect();
+        b.style.transform = `translate(${(e.clientX - r.left - r.width/2) * .25}px,${(e.clientY - r.top - r.height/2) * .35}px)`;
+      });
+      b.addEventListener('pointerleave', () => { b.style.transform = ''; });
+    });
+  }
+
+  /* ---- floating WhatsApp: show after the hero ---- */
+  const fab = document.getElementById('fab');
+  if ('IntersectionObserver' in window){
+    new IntersectionObserver(es => es.forEach(e => fab.classList.toggle('show', !e.isIntersecting))).observe(document.getElementById('hero'));
+  } else fab.classList.add('show');
+
+  /* ---- packing list (remembered in this browser) ---- */
+  const boxes = [...document.querySelectorAll('.pack input')];
+  const cnt = document.getElementById('pack-count'), bar = document.getElementById('pack-bar');
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('sky-pack') || '{}'); } catch(e) {}
+  const upd = () => {
+    const n = boxes.filter(b => b.checked).length;
+    cnt.textContent = n === boxes.length ? 'Всё собрано — до встречи в горах!' : `Собрано ${n} из ${boxes.length}`;
+    bar.style.width = (n / boxes.length * 100) + '%';
+  };
+  boxes.forEach(b => {
+    b.checked = !!saved[b.id];
+    b.addEventListener('change', () => { saved[b.id] = b.checked; try { localStorage.setItem('sky-pack', JSON.stringify(saved)); } catch(e) {} upd(); });
+  });
+  upd();
+
+  /* ---- copy phone ---- */
+  const btn = document.getElementById('copy'), out = document.getElementById('copied');
+  btn.addEventListener('click', () => {
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById('phone')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); out.textContent = 'Номер выделен — нажмите Ctrl+C'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText('+996708470500').then(() => out.textContent = 'Номер скопирован', fallback);
+    else fallback();
+  });
+})();
+</script>
